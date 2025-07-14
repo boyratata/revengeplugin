@@ -4,6 +4,7 @@ import { useProxy } from "@vendetta/storage";
 import { storage } from "@vendetta/plugin";
 import RPInstance from ".";
 import { logger } from "@vendetta";
+import { openURL } from "@vendetta/metro/common";
 
 const { View, ScrollView, TouchableOpacity } = ReactNative;
 const {
@@ -18,6 +19,28 @@ const typedStorage = storage as typeof storage & {
   selected: string;
   selections: Record<string, Activity>;
 };
+
+function previewPresence(data: Activity) {
+  const clone = JSON.parse(JSON.stringify(data));
+  if (clone.timestamps?._enabled && !clone.timestamps.start)
+    clone.timestamps.start = Date.now();
+
+  const buttons = clone.buttons?.filter(b => b?.label && b?.url);
+  const elements = [];
+
+  if (clone.details) elements.push(`**${clone.details}**`);
+  if (clone.state) elements.push(clone.state);
+  if (buttons?.length) {
+    buttons.forEach(b => {
+      elements.push(`[${b.label}](${b.url})`);
+    });
+  }
+
+  const previewText = elements.join("\n");
+
+  logger.log("[RPC] Preview (simulated):\n" + previewText);
+  openURL(`https://discord.com/channels/@me`);
+}
 
 export default function Settings() {
   useProxy(typedStorage);
@@ -62,6 +85,20 @@ export default function Settings() {
         >
           <FormText style={{ color: "white" }}>Update Presence</FormText>
         </TouchableOpacity>
+
+        <TouchableOpacity
+          style={{
+            backgroundColor: "#5865F2",
+            padding: 12,
+            borderRadius: 8,
+            alignItems: "center",
+            marginBottom: 16
+          }}
+          onPress={() => previewPresence(settings)}
+        >
+          <FormText style={{ color: "white" }}>Preview Presence</FormText>
+        </TouchableOpacity>
+
         <FormSection title="Basic">
           <FormInput
             title="Application Name"
@@ -190,4 +227,4 @@ export default function Settings() {
       </View>
     </ScrollView>
   );
-}
+              }
